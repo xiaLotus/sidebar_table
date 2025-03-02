@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>資料庫檢視</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="p-6 bg-gray-100">
+    <div id="app" class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
+        <h2 class="text-2xl font-bold mb-4">📊 SQLite 資料庫檢視</h2>
+
+        <button @click="fetchData" class="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+            重新載入資料
+        </button>
+
+        <h3 class="text-xl font-semibold mt-4">🧑‍💻 使用者 (Users)</h3>
+        <table class="w-full border-collapse border border-gray-300 mt-2">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="border border-gray-300 px-4 py-2">ID</th>
+                    <th class="border border-gray-300 px-4 py-2">使用者名稱</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="user in users" :key="user.id">
+                    <td class="border border-gray-300 px-4 py-2">{{ user.id }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ user.username }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3 class="text-xl font-semibold mt-6">📌 側邊欄項目 (Sidebar Items)</h3>
+        <table class="w-full border-collapse border border-gray-300 mt-2">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="border border-gray-300 px-4 py-2">ID</th>
+                    <th class="border border-gray-300 px-4 py-2">使用者 ID</th>
+                    <th class="border border-gray-300 px-4 py-2">項目名稱</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="item in sidebar" :key="item.id">
+                    <td class="border border-gray-300 px-4 py-2">{{ item.id }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ item.user_id }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ item.item_name }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    users: [],
+                    sidebar: []
+                };
+            },
+            methods: {
+                async fetchData() {
+                    try {
+                        const response = await fetch("http://127.0.0.1:5000/view-db");
+                        const data = await response.json();
+                        this.users = data.users;
+                        this.sidebar = data.sidebar;
+                    } catch (error) {
+                        console.error("❌ 無法取得資料:", error);
+                    }
+                }
+            },
+            mounted() {
+                this.fetchData();
+            }
+        }).mount("#app");
+    </script>
+</body>
+</html>

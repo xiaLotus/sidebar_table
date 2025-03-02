@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登入</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gray-100">
+    <div id="app" class="bg-white p-6 rounded-lg shadow-md w-96">
+        <h2 class="text-2xl font-semibold text-center mb-4">登入</h2>
+        <div v-if="errorMessage" class="text-red-500 text-sm mb-2">{{ errorMessage }}</div>
+        <input 
+            type="text" 
+            v-model="username" 
+            placeholder="輸入使用者名稱" 
+            class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
+        >
+        <button 
+            @click="login" 
+            class="w-full mt-4 bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600"
+        >
+            登入
+        </button>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    username: "",
+                    errorMessage: ""
+                };
+            },
+            methods: {
+                async login() {
+                    if (!this.username.trim()) {
+                        this.errorMessage = "請輸入使用者名稱";
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch("http://127.0.0.1:5000/login", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ username: this.username }),
+                        });
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            localStorage.setItem("user_id", data.user_id); // 儲存 user_id
+                            localStorage.setItem("username", data.username);
+                            window.location.href = "home.html"; // 跳轉到主頁
+                        } else {
+                            this.errorMessage = data.error || "登入失敗";
+                        }
+                    } catch (error) {
+                        this.errorMessage = "無法連接伺服器";
+                    }
+                }
+            }
+        });
+
+        app.mount("#app");
+    </script>
+</body>
+</html>

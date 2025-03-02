@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主頁</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex h-screen bg-gray-100">
+    <div id="app" class="flex w-full h-full">
+        <!-- Sidebar -->
+        <div class="w-64 bg-white shadow-md p-4">
+            <h2 class="text-xl font-semibold mb-4">側邊欄</h2>
+            <ul>
+                <li v-for="item in sidebarItems" :key="item.id" class="flex justify-between items-center bg-gray-200 p-2 rounded mb-2">
+                    <span>{{ item.item_name }}</span>
+                    <button @click="deleteItem(item.id)" class="text-red-500 hover:text-red-700">×</button>
+                </li>
+            </ul>
+            <input v-model="newItem" placeholder="新增項目" class="w-full px-2 py-1 border rounded mt-2">
+            <button @click="addItem" class="w-full bg-blue-500 text-white py-1 rounded mt-2 hover:bg-blue-600">新增</button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-6">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold">歡迎來到主頁</h1>
+                <div class="flex items-center space-x-4">
+                    <span class="font-semibold text-gray-700">使用者: {{ username }}</span>
+                    <button @click="logout" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">登出</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✅ Vue 代碼移到這裡 -->
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    username: localStorage.getItem("username") || "未知使用者",
+                    userId: localStorage.getItem("user_id"),
+                    sidebarItems: [],
+                    newItem: ""
+                };
+            },
+            methods: {
+                async fetchSidebar() {
+                    if (!this.userId) {
+                        console.error("❌ 無法獲取 sidebar，缺少 user_id");
+                        return;
+                    }
+                    const response = await fetch("http://127.0.0.1:5000/sidebar", {
+                        method: "GET",
+                        headers: { "User-ID": this.userId }
+                    });
+                    if (response.ok) {
+                        this.sidebarItems = await response.json();
+                    }
+                },
+                async addItem() {
+                    if (!this.newItem.trim() || !this.userId) return;
+                    const response = await fetch("http://127.0.0.1:5000/sidebar", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", "User-ID": this.userId },
+                        body: JSON.stringify({ item_name: this.newItem })
+                    });
+                    if (response.ok) {
+                        this.newItem = "";
+                        this.fetchSidebar();
+                    }
+                },
+                async deleteItem(id) {
+                    if (!this.userId) return;
+                    const response = await fetch("http://127.0.0.1:5000/sidebar", {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json", "User-ID": this.userId },
+                        body: JSON.stringify({ id })
+                    });
+                    if (response.ok) {
+                        this.fetchSidebar();
+                    }
+                },
+                async logout() {
+                    localStorage.removeItem("user_id");
+                    localStorage.removeItem("username");
+                    window.location.href = "index.html";
+                }
+            },
+            mounted() {
+                if (!this.userId) {
+                    window.location.href = "index.html"; // 如果沒有 user_id，強制回登入頁
+                }
+                this.fetchSidebar();
+            }
+        }).mount("#app");
+    </script>
+</body>
+</html>
